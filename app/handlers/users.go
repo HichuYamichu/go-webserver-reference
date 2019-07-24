@@ -15,12 +15,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// GetUsers : Returns JSON with all users
 func GetUsers(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 	r.Header.Set("content-type", "application/json")
 
 	var users []models.User
 	filter := bson.M{}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	coll := db.Collection("users")
 	cursor, err := coll.Find(ctx, filter)
@@ -35,18 +36,17 @@ func GetUsers(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 		cursor.Decode(&user)
 		users = append(users, user)
 	}
-	fmt.Println(users)
-	err = json.NewEncoder(w).Encode(users)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(users); err != nil {
 		fmt.Println(err)
 		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
 		return
 	}
 }
 
+// InsertUser : Inserts new user to database
 func InsertUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 	var user models.User
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	coll := db.Collection("users")
 	body, err := ioutil.ReadAll(r.Body)
@@ -55,8 +55,7 @@ func InsertUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
 		return
 	}
-	err = json.Unmarshal(body, &user)
-	if err != nil {
+	if err = json.Unmarshal(body, &user); err != nil {
 		fmt.Println(err)
 		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
 		return
@@ -72,6 +71,7 @@ func InsertUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+// UpdateUser : Updates user info
 func UpdateUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
@@ -81,7 +81,7 @@ func UpdateUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var user models.User
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	coll := db.Collection("users")
 	body, err := ioutil.ReadAll(r.Body)
@@ -90,8 +90,7 @@ func UpdateUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
 		return
 	}
-	err = json.Unmarshal(body, &user)
-	if err != nil {
+	if err = json.Unmarshal(body, &user); err != nil {
 		fmt.Println(err)
 		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
 		return
@@ -110,6 +109,7 @@ func UpdateUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+// DeleteUser : Removes user from database
 func DeleteUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
@@ -118,7 +118,7 @@ func DeleteUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	filter := bson.M{"_id": _id}
 	coll := db.Collection("users")
