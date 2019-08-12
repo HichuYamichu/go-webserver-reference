@@ -3,32 +3,32 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
 
+	appCtx "github.com/HichuYamichu/go-webserver-reference/app/context"
 	"github.com/HichuYamichu/go-webserver-reference/app/models"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // GetUsers : Returns JSON with all users
-func GetUsers(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
+func GetUsers(reqCtx *appCtx.Context, w http.ResponseWriter, r *http.Request) *AppError {
 	r.Header.Set("content-type", "application/json")
 
 	var users []models.User
 	filter := bson.M{}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	coll := db.Collection("users")
+	coll := reqCtx.DB.Collection("users")
 	cursor, err := coll.Find(ctx, filter)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 	defer cursor.Close(ctx)
 	for cursor.Next(ctx) {
@@ -36,64 +36,77 @@ func GetUsers(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 		cursor.Decode(&user)
 		users = append(users, user)
 	}
-	if err = json.NewEncoder(w).Encode(users); err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+	err = json.NewEncoder(w).Encode(users)
+	if err != nil {
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
+	return nil
 }
 
 // InsertUser : Inserts new user to database
-func InsertUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
+func InsertUser(reqCtx *appCtx.Context, w http.ResponseWriter, r *http.Request) *AppError {
 	var user models.User
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	coll := db.Collection("users")
+	coll := reqCtx.DB.Collection("users")
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
-	if err = json.Unmarshal(body, &user); err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 	_, err = coll.InsertOne(ctx, user)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 
 	w.WriteHeader(200)
 	w.Write([]byte("OK"))
+	return nil
 }
 
 // UpdateUser : Updates user info
-func UpdateUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
+func UpdateUser(reqCtx *appCtx.Context, w http.ResponseWriter, r *http.Request) *AppError {
 	params := mux.Vars(r)
 	id := params["id"]
 	_id, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 	var user models.User
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	coll := db.Collection("users")
+	coll := reqCtx.DB.Collection("users")
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
-	if err = json.Unmarshal(body, &user); err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 	filter := bson.M{"_id": _id}
 	update := bson.M{
@@ -101,33 +114,39 @@ func UpdateUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
 	}
 	_, err = coll.UpdateOne(ctx, filter, update)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 	w.WriteHeader(200)
 	w.Write([]byte("OK"))
+	return nil
 }
 
 // DeleteUser : Removes user from database
-func DeleteUser(db *mongo.Database, w http.ResponseWriter, r *http.Request) {
+func DeleteUser(reqCtx *appCtx.Context, w http.ResponseWriter, r *http.Request) *AppError {
 	params := mux.Vars(r)
 	id := params["id"]
 	_id, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	filter := bson.M{"_id": _id}
-	coll := db.Collection("users")
+	coll := reqCtx.DB.Collection("users")
 	_, err = coll.DeleteOne(ctx, filter)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 	w.WriteHeader(200)
 	w.Write([]byte("OK"))
+	return nil
 }

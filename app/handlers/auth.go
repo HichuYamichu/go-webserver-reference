@@ -1,28 +1,29 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
+	appCtx "github.com/HichuYamichu/go-webserver-reference/app/context"
 	jwt "github.com/dgrijalva/jwt-go"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var secret = os.Getenv("SECRET")
 
 // Authenticate : Sets cookie granting api access
-func Authenticate(_ *mongo.Database, w http.ResponseWriter, r *http.Request) {
+func Authenticate(reqCtx *appCtx.Context, w http.ResponseWriter, r *http.Request) *AppError {
 	token := jwt.New(jwt.SigningMethodHS256)
 	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		return &AppError{
+			Err:  err,
+			Msg:  http.StatusText(http.StatusInternalServerError),
+			Code: http.StatusInternalServerError}
 	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:  "token",
 		Value: tokenString,
 	})
+	return nil
 }

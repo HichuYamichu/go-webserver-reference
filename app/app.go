@@ -8,8 +8,10 @@ import (
 	"os"
 	"time"
 
+	appCtx "github.com/HichuYamichu/go-webserver-reference/app/context"
 	"github.com/HichuYamichu/go-webserver-reference/app/handlers"
 	"github.com/dgrijalva/jwt-go"
+	util "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,8 +19,8 @@ import (
 
 // App : Application struct
 type App struct {
-	Router *mux.Router
-	DB     *mongo.Database
+	Router http.Handler
+	Ctx    *appCtx.Context
 	Adrr   string
 }
 
@@ -35,29 +37,40 @@ func NewServer(host, port, mongoURI string) *App {
 	if err != nil {
 		panic(err)
 	}
-	a.DB = client.Database("Users")
+	db := client.Database("Users")
 
-	a.Router = mux.NewRouter()
-	a.setRouters()
+	a.Ctx = appCtx.NewContext(db)
+	a.Router = a.setupRouter()
 	a.Adrr = fmt.Sprintf("%s:%s", host, port)
 	return a
 }
 
-func (a *App) setRouters() {
-	api := a.Router.PathPrefix("/api").Subrouter()
+func (a *App) setupRouter() http.Handler {
+	r := mux.NewRouter()
+	api := r.PathPrefix("/api").Subrouter()
 	api.HandleFunc("/users", auth(a.handle(handlers.GetUsers))).Methods("GET")
 	api.HandleFunc("/user", auth(a.handle(handlers.InsertUser))).Methods("POST")
 	api.HandleFunc("/user/{id}", auth(a.handle(handlers.UpdateUser))).Methods("PUT")
 	api.HandleFunc("/user/{id}", auth(a.handle(handlers.DeleteUser))).Methods("DELETE")
-	a.Router.HandleFunc("/auth", a.handle(handlers.Authenticate)).Methods("GET")
-	a.Router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web/")))
+	r.HandleFunc("/auth", a.handle(handlers.Authenticate)).Methods("GET")
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./web/")))
+
+	allowedHeaders := util.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
+	allowedOrigins := util.AllowedOrigins([]string{"*"})
+	allowedMethods := util.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	h := util.LoggingHandler(os.Stdout, util.CORS(allowedOrigins, allowedHeaders, allowedMethods)(r))
+	return h
 }
 
-type handler func(db *mongo.Database, w http.ResponseWriter, r *http.Request)
+type handler func(ctx *appCtx.Context, w http.ResponseWriter, r *http.Request) *handlers.AppError
 
 func (a *App) handle(h handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		h(a.DB, w, r)
+		r.Header.Set("content-type", "application/json")
+		if err := h(a.Ctx, w, r); err != nil {
+			fmt.Println(err)
+			http.Error(w, err.Msg, err.Code)
+		}
 	}
 }
 
