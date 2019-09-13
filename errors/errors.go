@@ -1,7 +1,7 @@
-package handlers
+package errors
 
 // AppError : custom htpp error type
-type AppError struct {
+type ApiError struct {
 	Err  error
 	Msg  string
 	Code int
