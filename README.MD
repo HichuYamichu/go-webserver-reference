@@ -1,1 +1,3 @@
-## Just a reference for future uses
+## Webserver reference
+
+I've made this repo in order to practice some Go skills but it can work as a reference or base for actual server. The goal was to not use many external dependencies and so I've ended up doing everything by hand except DB interaction for which I just use GORM. Although that I would still recommend switching default http.ServeMux with some third party router (same goes for logging and other stuff like that). Also this app doesn't do proper CRUD since it's just an example and I didn't feel like putting too much work. Either way it should be easy to extend this base or at least take some parts of it as inspiration.

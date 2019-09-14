@@ -2,13 +2,14 @@ package user
 
 import (
 	"github.com/hichuyamichu/go-webserver-reference/controllers/base"
+	"github.com/jinzhu/gorm"
 )
 
 type UserController struct {
 	base.Controller
-	test string
+	DB *gorm.DB
 }
 
-func NewUserController() *UserController {
-	return &UserController{}
+func NewUserController(DB *gorm.DB) *UserController {
+	return &UserController{DB: DB}
 }

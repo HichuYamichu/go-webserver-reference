@@ -10,18 +10,19 @@ import (
 
 func (a *App) setupRouter() http.Handler {
 	r := http.NewServeMux()
-	userCont := user.NewUserController()
+	userCont := user.NewUserController(a.DB)
 	userCont.Use(first)
 	userCont.Use(second)
-	r.HandleFunc("/api/users", userCont.Run(userCont.GetUsers, third))
-	// api.HandleFunc("/user", auth(a.handle(handlers.InsertUser))).Methods("POST")
-	// api.HandleFunc("/user/{id}", auth(a.handle(handlers.UpdateUser))).Methods("PUT")
-	// api.HandleFunc("/user/{id}", auth(a.handle(handlers.DeleteUser))).Methods("DELETE")
-	// r.PathPrefix("/").Handler(http.FileServer(http.Dir("./web/")))
+	r.HandleFunc("/api/user/create", userCont.Run(userCont.InsertUser))
+	r.HandleFunc("/api/user/read", userCont.Run(userCont.GetUsers, third))
+	r.HandleFunc("/api/user/update", userCont.Run(userCont.UpdateUser))
+	r.HandleFunc("/api/user/delete", userCont.Run(userCont.DeleteUser))
+	r.Handle("/", http.FileServer(http.Dir("web")))
 
 	return r
 }
 
+// middleware example
 func first(next base.Handler) base.Handler {
 	return func(w http.ResponseWriter, r *http.Request) (int, error) {
 		log.Printf("First started")
