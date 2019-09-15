@@ -14,6 +14,7 @@ var host = flag.String("host", "127.0.0.1", "http service host")
 
 func main() {
 	flag.Parse()
+
 	srv := app.New(*host, *port)
 
 	go func() {

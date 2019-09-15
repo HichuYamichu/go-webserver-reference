@@ -1,12 +1,8 @@
 package models
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
+// User : represents a user
 type User struct {
-	gorm.Model
-	ID   int `gorm:"AUTO_INCREMENT"`
+	ID   int `gorm:"AUTO_INCREMENT, primary_key"`
 	Name string
 	Age  int
 }

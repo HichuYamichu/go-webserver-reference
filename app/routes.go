@@ -3,49 +3,47 @@ package app
 import (
 	"log"
 	"net/http"
+	"time"
 
-	"github.com/hichuyamichu/go-webserver-reference/controllers/base"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+
 	"github.com/hichuyamichu/go-webserver-reference/controllers/user"
 )
 
-func (a *App) setupRouter() http.Handler {
-	r := http.NewServeMux()
-	userCont := user.NewUserController(a.DB)
-	userCont.Use(first)
-	userCont.Use(second)
-	r.HandleFunc("/api/user/create", userCont.Run(userCont.InsertUser))
-	r.HandleFunc("/api/user/read", userCont.Run(userCont.GetUsers, third))
-	r.HandleFunc("/api/user/update", userCont.Run(userCont.UpdateUser))
-	r.HandleFunc("/api/user/delete", userCont.Run(userCont.DeleteUser))
+func (a *App) setupRouter() *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	userCont := user.NewController(a.DB)
+
+	r.Route("/api/user", func(r chi.Router) {
+		r.Get("/", handle(userCont.GetAllUsers))
+		r.Post("/", handle(userCont.InsertUser))
+
+		r.Route("/{userID}", func(r chi.Router) {
+			r.Get("/", handle(userCont.GetUser))
+			r.Put("/", handle(userCont.UpdateUser))
+			r.Delete("/", handle(userCont.DeleteUser))
+		})
+	})
+
 	r.Handle("/", http.FileServer(http.Dir("web")))
 
 	return r
 }
 
-// middleware example
-func first(next base.Handler) base.Handler {
-	return func(w http.ResponseWriter, r *http.Request) (int, error) {
-		log.Printf("First started")
-		next(w, r)
-		log.Printf("First finished")
-		return 200, nil
-	}
-}
+type handler func(w http.ResponseWriter, r *http.Request) (int, error)
 
-func second(next base.Handler) base.Handler {
-	return func(w http.ResponseWriter, r *http.Request) (int, error) {
-		log.Printf("Second started")
-		next(w, r)
-		log.Printf("Second finished")
-		return 200, nil
-	}
-}
-
-func third(next base.Handler) base.Handler {
-	return func(w http.ResponseWriter, r *http.Request) (int, error) {
-		log.Printf("Third started")
-		next(w, r)
-		log.Printf("Third finished")
-		return 200, nil
+func handle(h handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if code, err := h(w, r); err != nil {
+			log.Println(err)
+			http.Error(w, http.StatusText(code), code)
+		}
 	}
 }
