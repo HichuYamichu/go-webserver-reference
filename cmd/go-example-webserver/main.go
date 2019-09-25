@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/hichuyamichu/go-webserver-reference/app"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var port = flag.String("port", "3000", "http service port")
