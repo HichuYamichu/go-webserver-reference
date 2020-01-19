@@ -1,10 +1,11 @@
 module github.com/hichuyamichu/go-webserver-reference
 
-go 1.12
+go 1.13
 
 require (
-	github.com/go-chi/chi v4.0.2+incompatible
-	github.com/jinzhu/gorm v1.9.10
-	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
-	github.com/rs/cors v1.7.0
+	github.com/disintegration/imaging v1.6.1
+	github.com/hichuyamichu-me/utils v0.0.0-20191224102828-2240295d26e4 // indirect
+	github.com/jinzhu/gorm v1.9.11
+	github.com/labstack/echo v3.3.10+incompatible
+	github.com/labstack/gommon v0.3.0
 )
