@@ -6,7 +6,7 @@ import (
 
 	userService "github.com/hichuyamichu/go-webserver-reference/services/user"
 	"github.com/hichuyamichu/go-webserver-reference/store/models"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func FindUser(c echo.Context) error {
