@@ -1,7 +1,10 @@
 package user
 
-import "github.com/hichuyamichu/go-webserver-reference/store/models"
+import (
+	"github.com/hichuyamichu/go-webserver-reference/store/models"
+	userRepo "github.com/hichuyamichu/go-webserver-reference/store/user_repo"
+)
 
-func (UserService) FindOne(id int) *models.User {
+func FindOne(id int) *models.User {
 	return userRepo.FindOneByID(id)
 }

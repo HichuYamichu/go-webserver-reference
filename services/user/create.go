@@ -1,7 +1,10 @@
 package user
 
-import "github.com/hichuyamichu/go-webserver-reference/store/models"
+import (
+	"github.com/hichuyamichu/go-webserver-reference/store/models"
+	userRepo "github.com/hichuyamichu/go-webserver-reference/store/user_repo"
+)
 
-func (UserService) Create(user *models.User) {
+func Create(user *models.User) {
 	userRepo.Save(user)
 }

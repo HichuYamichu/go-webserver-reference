@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hichuyamichu/go-webserver-reference/app"
+	"github.com/hichuyamichu/go-webserver-reference/store"
 )
 
 var port = flag.String("port", "3000", "http service port")
@@ -17,6 +18,8 @@ var host = flag.String("host", "127.0.0.1", "http service host")
 
 func main() {
 	flag.Parse()
+
+	store.ConnectDB()
 	srv := app.New()
 
 	go func() {

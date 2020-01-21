@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hichuyamichu/go-webserver-reference/services/user"
+	userService "github.com/hichuyamichu/go-webserver-reference/services/user"
 	"github.com/hichuyamichu/go-webserver-reference/store/models"
 	"github.com/labstack/echo"
 )
-
-var userService = user.UserService{}
 
 func FindUser(c echo.Context) error {
 	idParam := c.Param("id")

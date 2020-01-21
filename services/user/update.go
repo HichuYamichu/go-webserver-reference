@@ -1,7 +1,10 @@
 package user
 
-import "github.com/hichuyamichu/go-webserver-reference/store/models"
+import (
+	"github.com/hichuyamichu/go-webserver-reference/store/models"
+	userRepo "github.com/hichuyamichu/go-webserver-reference/store/user_repo"
+)
 
-func (UserService) Update(user *models.User) {
+func Update(user *models.User) {
 	userRepo.UpdateOne(user)
 }
